@@ -23,6 +23,161 @@ import (
 
 //var keywords := []string{"and","import","not","return","option","test","empty","in","or","package"}
 
+type FluxFile struct {
+	pkg PackageClause_t
+	imps ImportList_t
+	stmts StatementList_t
+}
+
+type PackageClause_t struct {
+	op string
+	expr Identifier_t
+}
+type StatementList_t struct {
+	op []Statement_t
+}
+type Statement_t struct {
+	ops OptionAssignment_t
+	builts BuiltinStatement_t
+	vars VariableAssignment_t
+	ret ReturnStatement_t
+	expr Expression_t
+}
+
+type ReturnStatement_t struct {
+	//ReturnStatement = "return" Expression .
+	op Expression_t
+}
+type VariableAssignment_t struct {
+	op Identifier_t
+	expr Expression_t
+}
+type OptionAssignment_t struct {
+	//OptionAssignment = "option" [ identifier "." ] identifier "=" Expression
+	op Identifier_t
+	expr Expression_t 
+}
+
+type BuiltinStatement_t struct {
+	op Identifier_t
+	expr TypeExpression_t
+}
+
+type TypeExpression_t struct {
+	op MonoType_t //remember "where" string
+	expr ConstraintList_t
+}
+
+type ConstraintList_t struct {
+	op []Constraint_t
+}
+
+type Constraint_t struct {
+	op Tvar_t
+	expr Kinds_t
+}
+
+type Kinds_t struct {
+	op []Identifier_t
+}
+
+type MonoType_t struct {
+	tvar Tvar_t
+	basic BasicType_t
+	array ArrayType_t
+	stream StreamType_t
+	vec VectorType_t
+	rec RecordType_t
+	fun FunctionType_t
+}
+
+type Tvar_t struct {
+	op string
+}
+
+type BasicType_t struct {
+	op string //"int" | "uint" | "float" | "string" | "bool" | "time" | "duration" | "bytes" | "regexp"
+}
+
+type ArrayType_t struct {
+	op *MonoType_t //"[" MonoType "]" .
+}
+
+type StreamType_t struct {
+	op *MonoType_t //"stream" "[" MonoType "]" .
+}
+
+type VectorType_t struct {
+	op *MonoType_t //"vector" "[" MonoType "]" .
+}
+
+type RecordType_t struct {
+	op LHSRecordType_t
+	expr RHSRecordType_t
+}
+
+type LHSRecordType_t struct {
+	op RecordTypeProperties_t  //"{" [RecordTypeProperties] "}" 
+}
+
+type RecordTypeProperties_t struct {
+	op []RecordTypeProperty_t
+}
+
+
+type RHSRecordType_t struct {
+	op Tvar_t//( "{" Tvar "with" RecordTypeProperties "}" ) .
+	expr RecordTypePropertyList_t
+}
+type RecordTypePropertyList_t struct {
+	op []RecordTypeProperty_t
+}
+
+type RecordTypeProperty_t struct {
+	//RecordTypeProperty   = Label ":" MonoType .
+	op Label_t
+	expr *MonoType_t
+}
+
+type Label_t struct {
+	op Identifier_t
+	expr string //string literal
+}
+
+type RetunStatement_t struct {
+	op string //"return" string
+	expr Expression_t
+}
+
+type VariableStatement_t struct {
+	op Identifier_t
+	expr Expression_t
+}
+type ImportList_t struct {
+	op ImportDeclaration_t
+}
+
+type ImportDeclaration_t struct {
+
+	op string //string literal that follows the identifier
+	expr Identifier_t
+}
+type FunctionType_t struct {
+	//FunctionType = "(" [FunctionTypeParameters] ")" "=>" MonoType .
+	op FunctionTypeParameterList_t
+	expr *MonoType_t
+}
+
+type FunctionTypeParameterList_t struct {
+	op []FunctionTypeParameter_t
+}
+
+type FunctionTypeParameter_t struct{
+	//FunctionTypeParameter_t = [ "<-" | "?" ] identifier ":" MonoType .
+	op Identifier_t
+	expr *MonoType_t
+}
+
 type Production_t struct {
 	op string
 	expr Expression_t
@@ -299,14 +454,124 @@ type Identifier_t struct {
 }
 
 type Keyword_t struct {
- 	op string	
-}
-type Operator_t struct {
-	op string	
-}
-type Literal_t struct {
 	op string
 }
+type Operator_t struct {
+	op string
+}
+type Literal_t struct {
+	int_lit int
+	float_lit float64
+	string_lit string
+	regex_lit RegexLiteral_t
+	duration_lit DurationLiteral_t
+	piperec_lit PipeRecieveLiteral_t
+	rec_lit RecordLiteral_t
+	array_lit ArrayLiteral_t
+	dict_lit DictLiteral_t
+	func_lit FunctionLiteral_t
+}
+type FunctionLiteral_t struct {
+	//FunctionLiteral    = FunctionParameters "=>" FunctionBody .
+	op FunctionParameters_t
+	expr FunctionBody_t
+
+}
+type FunctionBody_t struct {
+	op Expression_t
+	expr Block_t
+}
+type Block_t struct {
+	op []Statement_t
+}
+type FunctionParameters_t struct {
+	op []Parameter_t
+}
+type Parameter_t struct {
+	op Identifier_t
+	expr Expression_t
+}
+type DictLiteral_t struct {
+	op EmptyDict_t
+	expr AssociativeList_t
+}
+type EmptyDict_t struct {
+	op string
+}
+type AssociativeList_t struct {
+	op Association_t
+}
+type Association_t struct {
+	op []ExpressionList_t
+}
+type ArrayLiteral_t struct {
+	op ExpressionList_t
+}
+
+type ExpressionList_t struct {
+	op []Expression_t
+}
+type RegexLiteral_t struct {
+	//regexp_lit         = "/" regexp_char { regexp_char } "/" .
+	regex_char RegexChar_t
+}
+
+type RegexChar_t struct {
+	uni UnicodeChar_t
+	bv rune
+}
+
+type DurationLiteral_t struct {
+	op DurationMagnitude_t
+	expr DurationUnit_t
+}
+type DurationUnit_t struct {
+	op rune
+}
+
+type PipeRecieveLiteral_t struct {
+	op string //<-
+}
+type RecordLiteral_t struct {
+	//RecordLiteral  = "{" RecordBody "}" .
+	op RecordBody_t
+}
+type RecordBody_t struct {
+	op WithProperties_t
+	expr PropertyList_t
+}
+type WithProperties_t struct {
+	//WithProperties = identifier "with"  PropertyList .
+	op Identifier_t
+	expr PropertyList_t
+}
+
+type PropertyList_t struct {
+	op LHSPropertyList_t
+	expr RHSPropertyList_t
+}
+
+type LHSPropertyList_t struct {
+	//identifier [ ":" Expression ]
+	op Identifier_t
+	expr Expression_t
+}
+
+type RHSPropertyList_t struct {
+	//string_lit ":" Expression .
+	op string
+	expr Expression_t
+}
+
+type UnicodeChar_t struct {
+	op rune
+}
+
+type DurationMagnitude_t struct {
+	op []int //
+	expr string //"y" | "mo" | "w" | "d" | "h" | "m" | "s" | "ms" | "us" | "µs" | "ns"
+}
+
 func init_random() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -752,8 +1017,8 @@ func (m MultiplicativeExpressionTruple_t) generate(seed string, index int) strin
 	mulop := MultiplicativeOperator_t {}
 	mul := MultiplicativeExpression_t {}
 
-	return exp.generate(seed,index) + 
-				 mulop.generate(seed,index) + 
+	return exp.generate(seed,index) +
+				 mulop.generate(seed,index) +
 						mul.generate(seed,index)
 }
 
@@ -783,13 +1048,13 @@ func (unar UnaryLogicalExpression_t) generate(seed string, index int) string {
 	}
 	return "unarylogical_expression "
 }
-func (bin BinaryLogicalExpression_t) generate(seed string, index int) string { 
+func (bin BinaryLogicalExpression_t) generate(seed string, index int) string {
 	if index > len(seed) {
 		lhs := BinaryLogicalExpression_t {}
 		op := LogicalExpression_t {}
 		rhs := UnaryLogicalExpression_t {}
 		return lhs.generate(seed,index+1) +
-					op.generate(seed,index) + 
+					op.generate(seed,index) +
 						rhs.generate(seed,index+1)
 	}
 	return "binarylogicalexpression "
