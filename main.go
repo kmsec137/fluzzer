@@ -6,20 +6,6 @@ import (
 	"fmt"
 	"os"
 )
-/**
-	* literals are not enunciated here we will fuzz them in an unstructed way
-
-	* psuedo code:
-		input: binary string of digits
-		output: random flux program
-			process:
-				- if a binary number is 1/0 choose either branch (production rule) in the grammar, recurse.
-				- if the seed is fully consumed choose the closest terminator
-	* we consume a binary number for each element in the grammar, should we run out of numbers
-		we then choose the closes terminator or string literal (might need some work discovering this)
-	
-**/
-
 
 type FluxFile_t struct {
 	pkg PackageClause_t
@@ -628,7 +614,8 @@ func (call CallExpression_t) generate(seed string, index int) string {
 
 func (prop PropertyListExpression_t) generate(seed string, index int) string {
 	var out string = "";
-	for i := 0; i < rand.Intn(10); i++ { //need to randomize the propertylist
+	count := rand.Intn(10)
+	for i := 0; i < count; i++ { //need to randomize the propertylist
 		p := Property_t{}
 		out += p.generate(seed,index) + ","
 	}
@@ -1217,13 +1204,14 @@ func (r RecordType_t) generate(seed string, index int) string {
 	return "record_type" //should not return here
 }
 
-func (r RecordTypeProperties_t) generate(seed string, index int){
+func (r RecordTypeProperties_t) generate(seed string, index int) string{
 
 	out := ""
-	for i := 0; i < rand.Intn(10); i++ {
+	count := rand.Intn(10)
+	for i := 0; i < count; i++ {
 		r := RecordTypeProperty_t {}
 		out += r.generate(seed,index)
-		if i != 9 {
+		if i != count - 1{
 			out += " ,"
 		}
 	}
@@ -1245,24 +1233,39 @@ func (l Label_t) generate(seed string, index int) string {
 				return generate_string()
 		}
 	}
+	//return "label " //should not reach here
+	return generate_string() //should not reach here
 }
 
 func (con ConstraintList_t) generate(seed string, index int) string {
 	out := ""
-	for i := 0; i < rand.Intn(10); i++ {
+	count := rand.Intn(10)
+	for i := 0; i < count; i++ {
 		c := Constraint_t {}
 		out += c.generate(seed,index)
-		if i != 9 {
+		if i != count - 1 {
 			out += " ,"
 		}
 	}
 	return out
 }
 func (fun FunctionType_t) generate(seed string, index int) string {
-	f := FunctionTypeParameters_t{}
+	f := FunctionTypeParameterList_t{}
 	m := MonoType_t {}
 
 	return "(" +f.generate(seed,index) +") => " +m.generate(seed,index) + ")"
+}
+func (fun FunctionTypeParameterList_t) generate(seed string, index int) string {
+	out := ""
+	count := rand.Intn(10)
+	for i := 0; i < count; i++ {
+		f := FunctionType_t {}
+		out += f.generate(seed,index)
+		if i != count-1 {
+			out += " ,"
+		}
+	}
+	return out
 }
 func (cons Constraint_t) generate(seed string, index int) string {
 	t := Tvar_t {}
@@ -1270,14 +1273,18 @@ func (cons Constraint_t) generate(seed string, index int) string {
 	return t.generate(seed,index) + ":" + k.generate(seed,index)
 }
 func (t Tvar_t) generate(seed string, index int) string {
-	return 
+
+	n := rand.Intn(25) //not sure what this means is a tvar a string or a random letter
+	return string(65 + n)
 }
-func (k Kinds) generate(seed string, index int) string {
+
+func (k Kinds_t) generate(seed string, index int) string {
 	out := ""
-	for i := 0;i < rand.Intn(19); i++ {
-			i := Identifier_t{}
-			out += i.generate(seed,index) 
-			if i != 9 {
+	count := rand.Intn(19)
+	for i := 0;i < count; i++ {
+			iden := Identifier_t{}
+			out += iden.generate(seed,index)
+			if i != count -1 {
 				out += ","
 			}
 	}
