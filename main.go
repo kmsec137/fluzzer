@@ -17,13 +17,11 @@ import (
 				- if the seed is fully consumed choose the closest terminator
 	* we consume a binary number for each element in the grammar, should we run out of numbers
 		we then choose the closes terminator or string literal (might need some work discovering this)
-	* should there be an automated way to convert a grammar into a normal form that allows for binary disovery?
 	
 **/
 
-//var keywords := []string{"and","import","not","return","option","test","empty","in","or","package"}
 
-type FluxFile struct {
+type FluxFile_t struct {
 	pkg PackageClause_t
 	imps ImportList_t
 	stmts StatementList_t
@@ -33,9 +31,11 @@ type PackageClause_t struct {
 	op string
 	expr Identifier_t
 }
+
 type StatementList_t struct {
 	op []Statement_t
 }
+
 type Statement_t struct {
 	ops OptionAssignment_t
 	builts BuiltinStatement_t
@@ -76,11 +76,9 @@ type Constraint_t struct {
 	op Tvar_t
 	expr Kinds_t
 }
-
 type Kinds_t struct {
 	op []Identifier_t
 }
-
 type MonoType_t struct {
 	tvar Tvar_t
 	basic BasicType_t
@@ -630,12 +628,13 @@ func (call CallExpression_t) generate(seed string, index int) string {
 
 func (prop PropertyListExpression_t) generate(seed string, index int) string {
 	var out string = "";
-	for i := 0; i < 10; i++ { //need to randomize the propertylist
+	for i := 0; i < rand.Intn(10); i++ { //need to randomize the propertylist
 		p := Property_t{}
 		out += p.generate(seed,index) + ","
 	}
 	return out
 }
+
 func (prop Property_t) generate(seed string, index int) string {
 	if index < len(seed) {
 		switch {
@@ -649,7 +648,7 @@ func (prop Property_t) generate(seed string, index int) string {
 	}
 	return "[ prop,prop ]\n" //need to handle base case
 }
-func (rhs RHSProperty_t) generate(seed string, index int) string{
+func (rhs RHSProperty_t) generate(seed string, index int) string {
 	i := Identifier_t {}
 	e := Expression_t {}
 	return i.generate(seed,index) + ":" + e.generate(seed,index)
@@ -660,7 +659,7 @@ func (lhs LHSProperty_t) generate(seed string, index int) string {
 	return "prop " + generate_string() + ":" + e.generate(seed,index)
 }
 
-func (iex IndexExpression_t) generate(seed string, index int) string{
+func (iex IndexExpression_t) generate(seed string, index int) string {
 	e := Expression_t {}
 	return "[" + e.generate(seed,index) + "]\n"
 }
@@ -699,7 +698,7 @@ func (add AdditiveExpression_t) generate(seed string, index int) string {
 func (add_tup AdditiveExpressionTruple_t) generate(seed string, index int) string{
 	lhs := AdditiveExpression_t {}
 	op := AdditiveOperator_t {}
-	rhs := MultiplicativeExpression_t {}	
+	rhs := MultiplicativeExpression_t {}
 	return lhs.generate(seed,index) + op.generate(seed,index) + rhs.generate(seed,index)
 }
 
@@ -1073,9 +1072,234 @@ func (log LogicalExpression_t) generate(seed string, index int) string {
 	}
 	return "logical_expression " //fix base case
 }
+func (f FluxFile_t) generate(seed string, index int) string {
+	pkg := PackageClause_t {}
+	imp := ImportList_t {}
+	stmts := StatementList_t {}
+	return pkg.generate(seed,index) + imp.generate(seed,index) + stmts.generate(seed,index)
+}
+
+func (pkg PackageClause_t) generate(seed string, index int) string{
+	iden := Identifier_t {}
+	return "package " +  iden.generate(seed,index)
+}
+func (imp ImportList_t) generate(seed string, index int) string{
+	count := rand.Intn(10)
+	out := ""
+	for i := 0; i< count; i++ {
+		dec := ImportDeclaration_t {}
+		out += dec.generate(seed,index) +"\n"
+	}
+	return out
+}
+func (imp ImportDeclaration_t) generate(seed string, index int) string {
+	iden := Identifier_t {}
+	return "import" + iden.generate(seed,index) + generate_string()
+}
+func (stmt Statement_t) generate(seed string, index int) string{
+	flip := rand.Intn(4)
+	if index < len(seed) {
+		switch {
+			case flip == 1:
+				op := OptionAssignment_t {}
+				return op.generate(seed,index+1)
+			case flip == 2:
+				b := BuiltinStatement_t {}
+				return b.generate(seed,index+1)
+			case flip == 3:
+				v := VariableAssignment_t {}
+				return v.generate(seed,index+1)
+			case flip == 4:
+				e := Expression_t {}
+				return e.generate(seed,index+1)
+		}
+	}
+	return "statement "
+}
 
 
+func (opt OptionAssignment_t) generate(seed string, index int) string{
+	iden_1 := Identifier_t {}
+	iden_2 := Identifier_t {}
+	exp := Expression_t {}
+	return "option " +  iden_1.generate(seed,index) + "." + iden_2.generate(seed,index) + "= " + exp.generate(seed,index)
+}
+
+func (b BuiltinStatement_t) generate(seed string, index int) string{
+	iden := Identifier_t {}
+	typ := TypeExpression_t {}
+	return "builtin " + iden.generate(seed,index) + typ.generate(seed,index)
+}
+
+func (typ TypeExpression_t) generate(seed string, index int) string{
+	mono := MonoType_t {}
+	c_list := ConstraintList_t {}
+	return mono.generate(seed,index) + "where" + c_list.generate(seed,index)
+}
+
+func (m MonoType_t) generate(seed string, index int) string {
+	//two many choices here we should go with a random number
+	n := rand.Intn(7)
+	switch {
+		case n == 0:
+			t := Tvar_t {}
+			return  t.generate(seed,index+1)
+		case n == 1:
+			b := BasicType_t {}
+			return b.generate(seed,index+1)
+		case n == 2:
+			a := ArrayType_t{}
+			return a.generate(seed,index+1)
+		case n == 3:
+			s := StreamType_t{}
+			return s.generate(seed,index+1)
+		case n == 4:
+			v := VectorType_t{}
+			return v.generate(seed,index+1)
+		case n == 5:
+			r := RecordType_t{}
+			return r.generate(seed,index+1)
+		case n == 6:
+			f := FunctionType_t{}
+			return f.generate(seed,index+1)
+	}
+	return "monotype" //should not return here
+}
+func (b BasicType_t) generate(seed string, index int) string { //these will not correlate with actual definition
+	n := rand.Intn(9)
+	switch {
+		case n == 0:
+			return "int"
+		case n == 1:
+			return "uint"
+		case n == 2:
+			return "float"
+		case n == 3:
+			return "string"
+		case n == 4:
+			return "bool"
+		case n == 5:
+			return "time"
+		case n == 6:
+			return "duration"
+		case n == 7:
+			return "bytes"
+		case n == 8:
+			return "regexp"
+	}
+	return "basic_type"
+}
+func (a ArrayType_t) generate(seed string, index int) string {
+	m := MonoType_t {}
+	return "[" + m.generate(seed,index) + "]"
+}
+func (s StreamType_t) generate(seed string, index int) string {
+	m := MonoType_t {}
+	return "stream [" + m.generate(seed,index) +"]"
+}
+func (v VectorType_t) generate(seed string, index int) string {
+	m := MonoType_t {}
+	return "vector [" + m.generate(seed,index) +"]"
+}
+
+func (r RecordType_t) generate(seed string, index int) string {
+	if index < len(seed) {
+		switch {
+			case '0' == seed[index]:
+				r := RecordTypeProperties_t{}
+				return "{" + r.generate(seed,index) + "}"
+			case '1' == seed[index]:
+				t := Tvar_t{}
+				r := RecordTypeProperties_t{}
+				return "{" + t.generate(seed,index) +"with " +r.generate(seed,index) + "}"
+		}
+	}
+	return "record_type" //should not return here
+}
+
+func (r RecordTypeProperties_t) generate(seed string, index int){
+
+	out := ""
+	for i := 0; i < rand.Intn(10); i++ {
+		r := RecordTypeProperty_t {}
+		out += r.generate(seed,index)
+		if i != 9 {
+			out += " ,"
+		}
+	}
+	return out
+}
+
+func (r RecordTypeProperty_t) generate(seed string, index int) string {
+	l := Label_t {}
+	m := MonoType_t{}
+	return l.generate(seed,index) +":"+m.generate(seed,index)
+}
+func (l Label_t) generate(seed string, index int) string {
+	if index < len(seed) {
+		switch {
+			case '0' == seed[index]:
+				i := Identifier_t {}
+				return i.generate(seed,index)
+			case '1' == seed[index]:
+				return generate_string()
+		}
+	}
+}
+
+func (con ConstraintList_t) generate(seed string, index int) string {
+	out := ""
+	for i := 0; i < rand.Intn(10); i++ {
+		c := Constraint_t {}
+		out += c.generate(seed,index)
+		if i != 9 {
+			out += " ,"
+		}
+	}
+	return out
+}
+func (fun FunctionType_t) generate(seed string, index int) string {
+	f := FunctionTypeParameters_t{}
+	m := MonoType_t {}
+
+	return "(" +f.generate(seed,index) +") => " +m.generate(seed,index) + ")"
+}
+func (cons Constraint_t) generate(seed string, index int) string {
+	t := Tvar_t {}
+	k := Kinds_t{}
+	return t.generate(seed,index) + ":" + k.generate(seed,index)
+}
+func (t Tvar_t) generate(seed string, index int) string {
+	return 
+}
+func (k Kinds) generate(seed string, index int) string {
+	out := ""
+	for i := 0;i < rand.Intn(19); i++ {
+			i := Identifier_t{}
+			out += i.generate(seed,index) 
+			if i != 9 {
+				out += ","
+			}
+	}
+	return out
+}
+
+func (v VariableAssignment_t) generate(seed string, index int) string {
+	return ""
+}
+
+
+func (stmt StatementList_t) generate(seed string, index int) string{
+	count := rand.Intn(10)
+	out := ""
+	for i := 0; i< count; i++ {
+		stmt := Statement_t {}
+		out += stmt.generate(seed,index) +"\n"
+	}
+	return out
+}
 func main(){
+	init_random();
 	prod := Production_t {}
 	fmt.Println(prod.generate(os.Args[1],0))
 }
