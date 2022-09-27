@@ -50,7 +50,7 @@ type BuiltinStatement_t struct {
 }
 
 type TypeExpression_t struct {
-	op MonoType_t //remember "where" string
+	op MonoType_t //remember "where " string
 	expr ConstraintList_t
 }
 
@@ -560,11 +560,11 @@ func init_random() {
 	rand.Seed(time.Now().UnixNano())
 }
 func generate_string() string {
-	return "string\n" //TODO: need to replace this with a string generator
+	return "string " //TODO: need to replace this with a string generator
 }
 
 func (lit Literal_t) generate(seed string, index int) string {
-	return "literal\n" //TODO: fix once we get everything working
+	return "literal " //TODO: fix once we get everything working
 }
 
 func (memb MemberBracketExpression_t) generate(seed string, index int) string{
@@ -572,7 +572,7 @@ func (memb MemberBracketExpression_t) generate(seed string, index int) string{
 }
 
 func (i Identifier_t) generate(seed string, index int) string{
-	return "identifier\n" //replace with random string when this works
+	return "identifier " //replace with random string when this works
 }
 
 func (dot DotExpression_t) generate(seed string, index int) string{
@@ -1081,7 +1081,7 @@ func (imp ImportList_t) generate(seed string, index int) string{
 }
 func (imp ImportDeclaration_t) generate(seed string, index int) string {
 	iden := Identifier_t {}
-	return "import" + iden.generate(seed,index) + generate_string()
+	return "import " + iden.generate(seed,index) + generate_string()
 }
 func (stmt Statement_t) generate(seed string, index int) string{
 	flip := rand.Intn(4)
@@ -1121,7 +1121,7 @@ func (b BuiltinStatement_t) generate(seed string, index int) string{
 func (typ TypeExpression_t) generate(seed string, index int) string{
 	mono := MonoType_t {}
 	c_list := ConstraintList_t {}
-	return mono.generate(seed,index) + "where" + c_list.generate(seed,index)
+	return mono.generate(seed,index) + "where " + c_list.generate(seed,index)
 }
 
 func (m MonoType_t) generate(seed string, index int) string {
@@ -1259,13 +1259,26 @@ func (fun FunctionTypeParameterList_t) generate(seed string, index int) string {
 	out := ""
 	count := rand.Intn(10)
 	for i := 0; i < count; i++ {
-		f := FunctionType_t {}
+		f := FunctionTypeParameter_t {}
 		out += f.generate(seed,index)
 		if i != count-1 {
 			out += " ,"
 		}
 	}
 	return out
+}
+func (fun FunctionTypeParameter_t) generate(seed string, index int) string {
+	iden := Identifier_t{}
+	m := MonoType_t{}
+	if index < len(seed) {
+		switch {
+			case seed[index] == '0':
+				return "<-" + iden.generate(seed,index+1) + ":" + m.generate(seed,index+1)
+			case seed[index] == '1':
+				return "?" + iden.generate(seed,index+1) + ":" + m.generate(seed,index+1)
+		}
+	}
+	return ""
 }
 func (cons Constraint_t) generate(seed string, index int) string {
 	t := Tvar_t {}
@@ -1275,7 +1288,7 @@ func (cons Constraint_t) generate(seed string, index int) string {
 func (t Tvar_t) generate(seed string, index int) string {
 
 	n := rand.Intn(25) //not sure what this means is a tvar a string or a random letter
-	return string(65 + n)
+	return string(65 + n) + " "
 }
 
 func (k Kinds_t) generate(seed string, index int) string {
@@ -1307,7 +1320,7 @@ func (stmt StatementList_t) generate(seed string, index int) string{
 }
 func main(){
 	init_random();
-	prod := Production_t {}
-	fmt.Println(prod.generate(os.Args[1],0))
+	file := FluxFile_t {}
+	fmt.Println(file.generate(os.Args[1],0))
 }
 
